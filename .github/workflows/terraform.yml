@@ -3,10 +3,10 @@ name: Terraform Plan (Preprod)
 on:
   push:
     branches:
-      - feature/github-actions-plan
+      - feature/iac-pipeline-setup
   pull_request:
     branches:
-      - feature/github-actions-plan
+      - feature/iac-pipeline-setup
 
 jobs:
   terraform-preprod:
