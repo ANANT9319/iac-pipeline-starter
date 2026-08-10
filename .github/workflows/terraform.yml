@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4   # latest version, Node.js 24 compatible
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v5
 		
 		
       - name: Azure Login
