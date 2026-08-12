@@ -1,0 +1,54 @@
+name: Terraform Plan (Preprod)
+
+on:
+  push:
+    branches:
+      - feature/iac-pipeline-setup
+  pull_request:
+    branches:
+      - feature/iac-pipeline-setup
+
+jobs:
+  terraform-preprod:
+    runs-on: ubuntu-latest
+    name: Terraform Plan (Preprod)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.8
+
+      - name: Azure Login
+        run: |
+          az login \
+            --service-principal \
+            --username ${{ secrets.ARM_CLIENT_ID }} \
+            --password ${{ secrets.ARM_CLIENT_SECRET }} \
+            --tenant ${{ secrets.ARM_TENANT_ID }}
+
+      - name: Set Azure Subscription
+        run: |
+          az account set \
+            --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Check Azure Login
+        run: az account show
+
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: env/preprod
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: env/preprod
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+        working-directory: env/preprod
