@@ -64,21 +64,29 @@ jobs:
         with:
           terraform_version: 1.13.5
 
+      # -------------------------------------------------------
+      # Azure Login
+      # -------------------------------------------------------
+
       - name: Azure Login
         run: |
           az login \
             --service-principal \
-            --username ${{ secrets.ARM_CLIENT_ID }} \
-            --password ${{ secrets.ARM_CLIENT_SECRET }} \
-            --tenant ${{ secrets.ARM_TENANT_ID }}
+            --username "${{ secrets.ARM_CLIENT_ID }}" \
+            --password "${{ secrets.ARM_CLIENT_SECRET }}" \
+            --tenant "${{ secrets.ARM_TENANT_ID }}"
 
       - name: Set Azure Subscription
         run: |
           az account set \
-            --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
+            --subscription "${{ secrets.ARM_SUBSCRIPTION_ID }}"
 
       - name: Check Azure Login
         run: az account show
+
+      # -------------------------------------------------------
+      # Terraform Checks
+      # -------------------------------------------------------
 
       - name: Terraform Format
         run: terraform fmt -check -recursive
@@ -103,34 +111,82 @@ jobs:
 
     needs: terraform-plan
 
-    # Only create/update PR when feature branch is pushed
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/iac-pipeline-setup'
+    # Only run when feature branch is pushed
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/feature/iac-pipeline-setup'
 
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
 
     steps:
 
+      # -------------------------------------------------------
+      # Check whether PR already exists
+      # -------------------------------------------------------
+
+      - name: Check Existing Pull Request
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --head "${{ github.ref_name }}" \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          echo "Existing PR number: $PR_NUMBER"
+
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      # -------------------------------------------------------
+      # Create PR if no PR exists
+      # -------------------------------------------------------
+
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v8
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
-          branch: feature/iac-pipeline-setup
-          title: "Terraform Preprod Changes"
-          body: |
-            ## Terraform Preprod Change
+        if: steps.check-pr.outputs.PR_NUMBER == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head "${{ github.ref_name }}" \
+            --title "Terraform Preprod Changes" \
+            --body "$(cat <<'EOF'
+          ## Terraform Preprod Change
 
-            Gitleaks scan completed successfully.
+          Automated Pull Request created by GitHub Actions.
 
-            Terraform format, init, validate and plan completed successfully.
+          ### Validation
 
-            Please review the changes and merge the PR after approval.
+          - Gitleaks Secret Scan: PASSED
+          - Terraform Format: PASSED
+          - Terraform Init: PASSED
+          - Terraform Validate: PASSED
+          - Terraform Plan: PASSED
 
-          labels: |
-            terraform
-            automated-pr
+          ### Next Step
+
+          Please review and approve this Pull Request.
+
+          After the PR is merged into `main`, Terraform Apply will run automatically.
+          EOF
+          )"
+
+      # -------------------------------------------------------
+      # PR already exists
+      # -------------------------------------------------------
+
+      - name: PR Already Exists
+        if: steps.check-pr.outputs.PR_NUMBER != ''
+        run: |
+          echo "Pull Request #${{ steps.check-pr.outputs.PR_NUMBER }} already exists."
+          echo "New commits will automatically appear in the existing Pull Request."
 
 
   # =========================================================
@@ -145,8 +201,13 @@ jobs:
       - gitleaks
       - terraform-plan
 
-    # Apply ONLY after merge/push to main
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # -------------------------------------------------------
+    # Apply ONLY after push/merge to main
+    # -------------------------------------------------------
+
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
 
     defaults:
       run:
@@ -162,21 +223,29 @@ jobs:
         with:
           terraform_version: 1.13.5
 
+      # -------------------------------------------------------
+      # Azure Login
+      # -------------------------------------------------------
+
       - name: Azure Login
         run: |
           az login \
             --service-principal \
-            --username ${{ secrets.ARM_CLIENT_ID }} \
-            --password ${{ secrets.ARM_CLIENT_SECRET }} \
-            --tenant ${{ secrets.ARM_TENANT_ID }}
+            --username "${{ secrets.ARM_CLIENT_ID }}" \
+            --password "${{ secrets.ARM_CLIENT_SECRET }}" \
+            --tenant "${{ secrets.ARM_TENANT_ID }}"
 
       - name: Set Azure Subscription
         run: |
           az account set \
-            --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
+            --subscription "${{ secrets.ARM_SUBSCRIPTION_ID }}"
 
       - name: Check Azure Login
         run: az account show
+
+      # -------------------------------------------------------
+      # Terraform
+      # -------------------------------------------------------
 
       - name: Terraform Init
         run: terraform init -input=false
