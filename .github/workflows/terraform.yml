@@ -37,7 +37,7 @@ jobs:
             --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -upgrade
         working-directory: env/preprod
 
       - name: Terraform Validate
