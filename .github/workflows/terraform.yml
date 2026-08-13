@@ -1,4 +1,4 @@
-name: Terraform Plan (Preprod)
+name: Terraform Preprod CI/CD
 
 on:
   push:
@@ -6,12 +6,19 @@ on:
       - feature/iac-pipeline-setup
   pull_request:
     branches:
-      - feature/iac-pipeline-setup
+      - main
+
+permissions:
+  contents: read
 
 jobs:
-  terraform-preprod:
+  terraform-plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
-    name: Terraform Plan (Preprod)
+
+    defaults:
+      run:
+        working-directory: env/preprod
 
     steps:
       - name: Checkout repository
@@ -20,7 +27,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.8
+          terraform_version: 1.13.5
 
       - name: Azure Login
         run: |
@@ -43,12 +50,47 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: env/preprod
 
       - name: Terraform Validate
         run: terraform validate
-        working-directory: env/preprod
 
       - name: Terraform Plan
-        run: terraform plan -input=false
+        run: terraform plan
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+
+    needs: terraform-plan
+
+    # Apply ONLY after push to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
         working-directory: env/preprod
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.5
+
+      - name: Azure Login
+        run: |
+          az login \
+            --service-principal \
+            --username ${{ secrets.ARM_CLIENT_ID }} \
+            --password ${{ secrets.ARM_CLIENT_SECRET }} \
+            --tenant ${{ secrets.ARM_TENANT_ID }}
+
+      - name: Set Azure Subscription
+        run: |
+          az account set \
+            --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Check Azure Login
+        run: az account show
