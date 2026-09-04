@@ -21,9 +21,9 @@ jobs:
       with:
         terraform_version: 1.15.8
 
-    - name: Terraform Format
-      run: terraform fmt 
-      working-directory: iac-pipeline-starter
+    # - name: Terraform Format
+    #   run: terraform fmt 
+    #   working-directory: env
 
     - name: Terraform Init
       run: terraform init
