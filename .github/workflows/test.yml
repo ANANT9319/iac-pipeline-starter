@@ -21,10 +21,10 @@ jobs:
       with:
         terraform_version: 1.15.8
 
-    - name: Azure Login (via Action)
-      uses: azure/login@v1
+    # - name: Azure Login (via Action)
+    #   uses: azure/login@v3
 
-    - name: Azure Login (via CLI)
+    - name: Azure Login 
       run: |
         az login \
           --service-principal \
