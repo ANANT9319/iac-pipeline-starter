@@ -22,7 +22,8 @@ jobs:
         terraform_version: 1.15.8
 
     - name: Terraform Format
-      run: terraform fmt -check -recursive
+      run: terraform fmt 
+      working-directory: iac-pipeline-starter
 
     - name: Terraform Init
       run: terraform init

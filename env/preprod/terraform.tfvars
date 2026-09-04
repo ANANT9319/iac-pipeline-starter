@@ -9,7 +9,7 @@ uat = {
     location = "centralindia"
   }
 
-    rg3 = {
+  rg3 = {
     name     = "uat-rg-3"
     location = "centralindia"
   }
