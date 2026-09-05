@@ -20,6 +20,7 @@ jobs:
   # 1. GITLEAKS SECRET SCAN
   # =========================================================
 
+
   gitleaks:
     name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
