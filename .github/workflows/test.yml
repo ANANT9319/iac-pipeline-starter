@@ -20,7 +20,6 @@ jobs:
   # 1. GITLEAKS SECRET SCAN
   # =========================================================
 
-
   gitleaks:
     name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
@@ -39,6 +38,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   # =========================================================
   # 2. TERRAFORM PLAN
@@ -100,6 +100,7 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -input=false
 
+
   # =========================================================
   # 3. AUTOMATIC PULL REQUEST
   # =========================================================
@@ -120,7 +121,6 @@ jobs:
       pull-requests: write
 
     steps:
-
 
       # -------------------------------------------------------
       # Check whether PR already exists
@@ -242,12 +242,6 @@ jobs:
 
       - name: Check Azure Login
         run: az account show
-
-      - name: Check Azure Configuration
-        run: |
-            echo "Client ID length: ${#ARM_CLIENT_ID}"
-            echo "Tenant ID: $ARM_TENANT_ID"
-            echo "Subscription ID: $ARM_SUBSCRIPTION_ID"
 
       # -------------------------------------------------------
       # Terraform
