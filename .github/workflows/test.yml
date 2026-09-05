@@ -99,7 +99,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -input=false
 
-
   # =========================================================
   # 3. AUTOMATIC PULL REQUEST
   # =========================================================
